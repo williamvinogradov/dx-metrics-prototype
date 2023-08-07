@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DX_METRICS_DB_URL")
+}
+
+model trello_team_settings {
+  id                            Int      @id @default(autoincrement())
+  created_time                  DateTime @default(now())
+  updated_time                  DateTime @updatedAt
+  board_id                      String   @unique
+  done_list_name_reg_exp        String
+  work_list_name_reg_exp        String
+  trello_name_sc_ticket_reg_exp String
+}
+
+model tasks {
+  id             String          @id @default(uuid())
+  created_time   DateTime        @default(now())
+  updated_time   DateTime        @updatedAt
+  trello_cards   trello_cards[]
+  sc_ticket_data sc_ticket_data?
+}
+
+// === Trello section ===
+model trello_cards {
+  trello_id                   String                        @id
+  created_time                DateTime                      @default(now())
+  updated_time                DateTime                      @updatedAt
+  task_id                     String
+  task                        tasks                         @relation(fields: [task_id], references: [id])
+  trello_member_task_relation trello_card_member_relation[]
+  trello_card_history         trello_card_history[]
+  trello_label_task_relation  trello_card_label_relation[]
+  board_id                    String
+  score                       Int?
+  done_time                   DateTime
+  duration_minutes            Int
+}
+
+model trello_labels {
+  trello_id                  String                       @id
+  created_time               DateTime                     @default(now())
+  updated_time               DateTime                     @updatedAt
+  trello_board_id            String
+  name                       String
+  trello_label_task_relation trello_card_label_relation[]
+}
+
+model trello_members {
+  trello_id                   String                        @id
+  created_time                DateTime                      @default(now())
+  updated_time                DateTime                      @updatedAt
+  trello_name                 String                        @unique
+  full_name                   String                        @unique
+  trello_member_task_relation trello_card_member_relation[]
+}
+
+model trello_lists {
+  trello_id           String                @id
+  created_time        DateTime              @default(now())
+  updated_time        DateTime              @updatedAt
+  name                String
+  trello_board_id     String
+  type                Int
+  is_processed        Boolean
+  trello_card_history trello_card_history[]
+}
+
+model trello_card_history {
+  id               String       @id @default(uuid())
+  created_time     DateTime     @default(now())
+  updated_time     DateTime     @updatedAt
+  trello_card_id   String
+  trello_card      trello_cards @relation(fields: [trello_card_id], references: [trello_id])
+  trello_list_id   String
+  trello_list      trello_lists @relation(fields: [trello_list_id], references: [trello_id])
+  start_time       DateTime
+  end_time         DateTime?
+  duration_minutes Int?
+}
+
+model trello_card_label_relation {
+  id              String        @id @default(uuid())
+  created_time    DateTime      @default(now())
+  updated_time    DateTime      @updatedAt
+  trello_card_id  String
+  trello_card     trello_cards  @relation(fields: [trello_card_id], references: [trello_id])
+  trello_label_id String
+  label           trello_labels @relation(fields: [trello_label_id], references: [trello_id])
+
+  @@unique([trello_card_id, trello_label_id])
+}
+
+model trello_card_member_relation {
+  id               String         @id @default(uuid())
+  created_time     DateTime       @default(now())
+  updated_time     DateTime       @updatedAt
+  trello_card_id   String
+  trello_card      trello_cards   @relation(fields: [trello_card_id], references: [trello_id])
+  trello_member_id String
+  member           trello_members @relation(fields: [trello_member_id], references: [trello_id])
+
+  @@unique([trello_card_id, trello_member_id])
+}
+
+// === SC section ===
+model sc_ticket_data {
+  id            String   @id @default(uuid())
+  created_time  DateTime @default(now())
+  updated_time  DateTime @updatedAt
+  ticket_number String   @unique
+  tasks_id      String   @unique
+  tasks         tasks    @relation(fields: [tasks_id], references: [id])
+}
