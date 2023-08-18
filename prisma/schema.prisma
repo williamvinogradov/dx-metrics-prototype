@@ -30,18 +30,19 @@ model tasks {
 
 // === Trello section ===
 model trello_cards {
-  trello_id                   String                        @id
-  created_time                DateTime                      @default(now())
-  updated_time                DateTime                      @updatedAt
-  task_id                     String
-  task                        tasks                         @relation(fields: [task_id], references: [id])
-  trello_member_task_relation trello_card_member_relation[]
-  trello_card_history         trello_card_history[]
-  trello_label_task_relation  trello_card_label_relation[]
-  board_id                    String
-  score                       Int?
-  done_time                   DateTime
-  duration_minutes            Int
+  trello_id                     String                          @id
+  created_time                  DateTime                        @default(now())
+  updated_time                  DateTime                        @updatedAt
+  task_id                       String
+  task                          tasks                           @relation(fields: [task_id], references: [id])
+  trello_member_task_relation   trello_card_member_relation[]
+  trello_card_history           trello_card_history[]
+  trello_label_task_relation    trello_card_label_relation[]
+  board_id                      String
+  score                         Int?
+  done_time                     DateTime
+  duration_minutes              Int
+  trello_card_custom_field_data trello_card_custom_field_data[]
 }
 
 model trello_labels {
@@ -71,6 +72,26 @@ model trello_lists {
   type                Int
   is_processed        Boolean
   trello_card_history trello_card_history[]
+}
+
+model trello_custom_fields {
+  trello_id                     String                          @id
+  created_time                  DateTime                        @default(now())
+  updated_time                  DateTime                        @updatedAt
+  name                          String
+  trello_card_custom_field_data trello_card_custom_field_data[]
+}
+
+model trello_card_custom_field_data {
+  id             String               @id @default(uuid())
+  created_time   DateTime             @default(now())
+  updated_time   DateTime             @updatedAt
+  field_id       String
+  field          trello_custom_fields @relation(fields: [field_id], references: [trello_id])
+  trello_card_id String
+  trello_card    trello_cards         @relation(fields: [trello_card_id], references: [trello_id])
+  // Only supports number custom fields for now.
+  value_number   Int?
 }
 
 model trello_card_history {

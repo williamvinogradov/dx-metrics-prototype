@@ -30,6 +30,11 @@ export interface TrelloCard {
   name: string;
 }
 
+export interface TrelloCustomField {
+  id: string;
+  name: string;
+}
+
 export interface TrelloCardPluginData {
   score: number | null;
 }
@@ -76,4 +81,12 @@ export interface TrelloCardHistoryItem {
   startTime: Date;
   endTime: Date | null;
   durationInMinutes: number | null;
+}
+
+export interface TrelloCardCustomFieldData {
+  idCustomField: string;
+  value: {
+    // Only supports number custom fields for now.
+    number?: number;
+  };
 }

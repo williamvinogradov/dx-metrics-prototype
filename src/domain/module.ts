@@ -13,6 +13,10 @@ import {
   TrelloUpdateMembersCommand,
   TrelloUpdateMembersCommandHandler,
 } from './commands';
+import {
+  TrelloUpdateCustomFieldsCommand,
+  TrelloUpdateCustomFieldsCommandHandler,
+} from './commands/trello-update-custom-fields';
 import { TrelloCardHistoryConverter } from './trello-card-history.converter';
 
 @Module({
@@ -38,6 +42,10 @@ import { TrelloCardHistoryConverter } from './trello-card-history.converter';
     {
       provide: TrelloUpdateCardsCommand.name,
       useClass: TrelloUpdateCardsCommandHandler,
+    },
+    {
+      provide: TrelloUpdateCustomFieldsCommand.name,
+      useClass: TrelloUpdateCustomFieldsCommandHandler,
     },
   ],
   exports: [Dispatcher],

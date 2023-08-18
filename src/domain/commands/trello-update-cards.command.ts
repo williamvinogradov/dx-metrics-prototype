@@ -124,6 +124,7 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
     await this.trelloDbRepo.deleteTrelloCardMembers(card.id);
     await this.trelloDbRepo.deleteTrelloCardLabels(card.id);
     await this.trelloDbRepo.deleteTrelloCardHistory(card.id);
+    await this.trelloDbRepo.deleteTrelloCardCustomFieldsData(card.id);
 
     await this.insertTrelloData(taskId, card, handleContext);
   }
@@ -133,11 +134,15 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
     card: TrelloCard,
     handleContext: HandleContext,
   ): Promise<void> {
-    const cardPluginData = await this.trelloApiRepo.getCardPluginData(card.id);
-    const [cardHistoryData, cardHistoryItems] = await this.getTrelloCardHistory(
-      card,
-      handleContext,
-    );
+    const [
+      cardPluginData,
+      [cardHistoryData, cardHistoryItems],
+      cardCustomFieldsData,
+    ] = await Promise.all([
+      this.trelloApiRepo.getCardPluginData(card.id),
+      this.getTrelloCardHistory(card, handleContext),
+      this.trelloApiRepo.getCardCustomFieldsData(card.id),
+    ]);
 
     await this.trelloDbRepo.upsertTrelloCard(taskId, {
       ...card,
@@ -147,6 +152,10 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
     await this.trelloDbRepo.insertTrelloCardMembers(card.id, card.idMembers);
     await this.trelloDbRepo.insertTrelloCardLabels(card.id, card.idLabels);
     await this.trelloDbRepo.insertTrelloCardHistory(card.id, cardHistoryItems);
+    await this.trelloDbRepo.insertTrelloCardCustomFieldsData(
+      card.id,
+      cardCustomFieldsData,
+    );
   }
 
   private async getTrelloCardHistory(

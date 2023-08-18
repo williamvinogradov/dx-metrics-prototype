@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { Logger } from 'winston';
 import {
+  TrelloCardCustomFieldData,
   TrelloCardFull,
   TrelloCardHistoryItem,
+  TrelloCustomField,
   TrelloLabel,
   TrelloList,
   TrelloListType,
@@ -72,6 +74,24 @@ export class TrelloDbRepository {
       });
     });
     this.logger.log('info', 'Upserted trello lists in db');
+  }
+
+  async upsertCustomFields(customFields: TrelloCustomField[]): Promise<void> {
+    this.logger.log(
+      'info',
+      `Upserting ${customFields.length} trello custom fields...`,
+    );
+    await asyncForEach(customFields, async ({ id, name }) => {
+      await this.prismaClient.trello_custom_fields.upsert({
+        where: { trello_id: id },
+        update: { name },
+        create: { trello_id: id, name },
+      });
+    });
+    this.logger.log(
+      'info',
+      `Upserted ${customFields.length} trello custom fields`,
+    );
   }
 
   async selectTeamLists(
@@ -256,5 +276,43 @@ export class TrelloDbRepository {
       where: { trello_card_id: cardId },
     });
     this.logger.log('info', `Deleted trello card ${cardId} history`);
+  }
+
+  async insertTrelloCardCustomFieldsData(
+    cardId: string,
+    customFieldsData: TrelloCardCustomFieldData[],
+  ): Promise<void> {
+    this.logger.log(
+      'info',
+      `Inserting trello card ${cardId} custom fields data...`,
+    );
+    await this.prismaClient.trello_card_custom_field_data.createMany({
+      data: customFieldsData.map((data) => {
+        const valueNumber = Number.isNaN(data.value.number)
+          ? null
+          : Number(data.value.number);
+
+        return {
+          field_id: data.idCustomField,
+          trello_card_id: cardId,
+          value_number: valueNumber,
+        };
+      }),
+    });
+    this.logger.log(
+      'info',
+      `Inserted trello card ${cardId} custom fields data`,
+    );
+  }
+
+  async deleteTrelloCardCustomFieldsData(cardId: string): Promise<void> {
+    this.logger.log(
+      'info',
+      `Deleting trello card ${cardId} custom fields data...`,
+    );
+    await this.prismaClient.trello_card_custom_field_data.deleteMany({
+      where: { trello_card_id: cardId },
+    });
+    this.logger.log('info', `Deleted trello card ${cardId} custom fields data`);
   }
 }
