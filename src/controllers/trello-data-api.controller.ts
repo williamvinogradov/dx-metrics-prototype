@@ -6,6 +6,7 @@ import {
   TrelloUpdateListsCommand,
   TrelloUpdateCardsCommand,
 } from '../domain';
+import { TrelloUpdateCustomFieldsCommand } from '../domain/commands/trello-update-custom-fields';
 import { TrelloTeamSettingsDbRepository } from '../repositories/db';
 
 @Controller()
@@ -58,6 +59,17 @@ export class TrelloDataApiController {
       this.dispatcher.dispatch(
         new TrelloUpdateCardsCommand(boardId, nameScRegExp),
       );
+    });
+
+    return 'OK';
+  }
+
+  @Put('/api/v1/trello/custom-fields')
+  async putCustomFields(): Promise<string> {
+    const settings = await this.teamSettingRepo.selectAllTeamsSettings();
+
+    settings.forEach(({ boardId }) => {
+      this.dispatcher.dispatch(new TrelloUpdateCustomFieldsCommand(boardId));
     });
 
     return 'OK';

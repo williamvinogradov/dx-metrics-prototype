@@ -10,6 +10,8 @@ import {
   TrelloMember,
   TrelloListType,
   TrelloCardMoveAction,
+  TrelloCustomField,
+  TrelloCardCustomFieldData,
 } from '../../domain';
 
 @Injectable()
@@ -84,6 +86,20 @@ export class TrelloApiRepository {
       });
   }
 
+  async getBoardCustomFields(boardId: string): Promise<TrelloCustomField[]> {
+    return this.http
+      .getAsync(
+        `${this.api.url}/boards/${boardId}/customFields?key=${this.api.key}&token=${this.api.token}`,
+      )
+      .then(({ data }) => {
+        this.logger.log(
+          'info',
+          `Loaded board ${boardId} ${data.length} custom fields.`,
+        );
+        return data;
+      });
+  }
+
   async getListCards(listId: string): Promise<TrelloCard[]> {
     return this.http
       .getAsync(
@@ -121,6 +137,18 @@ export class TrelloApiRepository {
     return this.http
       .getAsync(
         `${this.api.url}/cards/${cardId}/actions?filter=updateCard:idList&key=${this.api.key}&token=${this.api.token}`,
+      )
+      .then(({ data }) => {
+        return data;
+      });
+  }
+
+  async getCardCustomFieldsData(
+    cardId: string,
+  ): Promise<TrelloCardCustomFieldData[]> {
+    return this.http
+      .getAsync(
+        `${this.api.url}/cards/${cardId}/customFieldItems?key=${this.api.key}&token=${this.api.token}`,
       )
       .then(({ data }) => {
         return data;
