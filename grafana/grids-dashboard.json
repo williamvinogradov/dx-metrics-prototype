@@ -1,0 +1,1175 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 5,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 15,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 3
+              },
+              {
+                "color": "#EF843C",
+                "value": 5
+              },
+              {
+                "color": "#E24D42",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n  bt.trello_id,\n  SUM(tch.duration_minutes / (60 * 24)) as eta\nfrom (\n\tselect tc.trello_id from trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id = tclr.trello_label_id \n\twhere tl.name like '%bug%' and tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as bt\ninner join (\n\tselect * from trello_card_history tch_inner\n\twhere tch_inner.trello_list_id != '5a2fc0acdf6af93d3a7528c7'\n) as tch\non tch.trello_card_id = bt.trello_id \ngroup by bt.trello_id ",
+          "refId": "Bug ETA",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "🐞 Bug average time",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 10,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 2
+              },
+              {
+                "color": "#EF843C",
+                "value": 3
+              },
+              {
+                "color": "#E24D42",
+                "value": 5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n  tl2.name,\n  bt.trello_id,\n  SUM(tch.duration_minutes) * 1. / (60 * 24) as eta\nfrom (\n\tselect tc.trello_id from trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id = tclr.trello_label_id \n\twhere tl.name like '%bug%' and tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as bt\ninner join trello_card_history tch \non tch.trello_card_id = bt.trello_id\ninner join (\n\tselect * from trello_lists tl_inner\n\twhere \n\ttl_inner.type = 0 \n\tand tl_inner.trello_id = '5a2fc0b811bfc2a9b31cc852'\n) as tl2\non tl2.trello_id = tch.trello_list_id \ngroup by tl2.name, bt.trello_id\t",
+          "refId": "Bug ETA",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "🛠️ Doing average time",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 10,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 3
+              },
+              {
+                "color": "#EF843C",
+                "value": 5
+              },
+              {
+                "color": "#E24D42",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 5,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n  tl2.name,\n  bt.trello_id,\n  SUM(tch.duration_minutes) * 1. / (60 * 24) as eta\nfrom (\n\tselect tc.trello_id from trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id = tclr.trello_label_id \n\twhere tl.name like '%bug%' and tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as bt\ninner join trello_card_history tch \non tch.trello_card_id = bt.trello_id\ninner join (\n\tselect * from trello_lists tl_inner\n\twhere \n\ttl_inner.type = 0 \n\tand tl_inner.trello_id = '5a2fc0caee2889ee4735dfd4'\n) as tl2\non tl2.trello_id = tch.trello_list_id \ngroup by tl2.name, bt.trello_id\t",
+          "refId": "Bug ETA",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "🏝️ Waiting average time",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 4,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 1
+              },
+              {
+                "color": "#EF843C",
+                "value": 2
+              },
+              {
+                "color": "#E24D42",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n  tl2.name,\n  bt.trello_id,\n  SUM(tch.duration_minutes) * 1. / (60 * 24) as eta\nfrom (\n\tselect tc.trello_id from trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id = tclr.trello_label_id \n\twhere tl.name like '%bug%' and tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as bt\ninner join trello_card_history tch \non tch.trello_card_id = bt.trello_id\ninner join (\n\tselect * from trello_lists tl_inner\n\twhere \n\ttl_inner.type = 0 \n\tand tl_inner.trello_id = '5a2fc0d2da16f4a190bcb5e3'\n) as tl2\non tl2.trello_id = tch.trello_list_id \ngroup by tl2.name, bt.trello_id\t",
+          "refId": "Bug ETA",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "👀 Review average time",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "max": 4,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "dark-green"
+              },
+              {
+                "color": "semi-dark-green",
+                "value": 0
+              },
+              {
+                "color": "#EAB839",
+                "value": 1
+              },
+              {
+                "color": "#EF843C",
+                "value": 2
+              },
+              {
+                "color": "#E24D42",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 7,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n  tl2.name,\n  bt.trello_id,\n  SUM(tch.duration_minutes) * 1. / (60 * 24) as eta\nfrom (\n\tselect tc.trello_id from trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id = tclr.trello_label_id \n\twhere tl.name like '%bug%' and tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as bt\ninner join trello_card_history tch \non tch.trello_card_id = bt.trello_id\ninner join (\n\tselect * from trello_lists tl_inner\n\twhere \n\ttl_inner.type = 0 \n\tand tl_inner.trello_id = '64abb4da74aacfb1812e144a'\n) as tl2\non tl2.trello_id = tch.trello_list_id \ngroup by tl2.name, bt.trello_id\t",
+          "refId": "Bug ETA",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "👏 Ready to merge average time",
+      "transformations": [],
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-red"
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 0,
+        "y": 8
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^bug_count$/",
+          "values": false
+        },
+        "textMode": "value_and_name"
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\tCOUNT(tc.trello_id) as bug_count,\n\tDATETRUNC(week, DATEADD(week, 1, tc.done_time)) as week \nfrom trello_cards tc \ninner join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \ninner join trello_labels tl \non tl.trello_id = tclr.trello_label_id \nwhere tl.name like '%bug%'\ngroup by DATETRUNC(week, DATEADD(week, 1, tc.done_time))\nhaving DATETRUNC(week, DATEADD(week, 1, tc.done_time)) between '${__from:date:iso}' and '${__to:date:iso}'",
+          "refId": "Closed bugs",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Closed bug count (last)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 38,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bug_count"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 4,
+        "y": 8
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\tCOUNT(tc.trello_id) as bug_count,\n\tDATETRUNC(week, DATEADD(week, 1, tc.done_time)) as week \nfrom trello_cards tc \ninner join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \ninner join trello_labels tl \non tl.trello_id = tclr.trello_label_id \nwhere tl.name like '%bug%'\ngroup by DATETRUNC(week, DATEADD(week, 1, tc.done_time))\nhaving DATETRUNC(week, DATEADD(week, 1, tc.done_time)) between '${__from:date:iso}' and '${__to:date:iso}'",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Bug count dynamic",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "story_points type: development"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "story_points type: infrastructure 🛠"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "story_points type: support help 🎗️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "story_points type: routine"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n    tl.name,\n    DATETRUNC(week, DATEADD(week, 1, done_time)) as week,\n\tISNULL(SUM(score), 0) as story_points\nfrom trello_cards tc \ninner join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id  \ninner join trello_labels tl \non tl.trello_id = tclr.trello_label_id\ngroup by tl.name, DATETRUNC(week, DATEADD(week, 1, done_time))\nhaving \n\ttl.name like '%type:%' \n\tand DATETRUNC(week, DATEADD(week, 1, done_time)) between '${__from:date:iso}' and '${__to:date:iso}'",
+          "refId": "Task types",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Task types",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttm.full_name as assignee,\n\tDATETRUNC(week, DATEADD(week, 1, tc.done_time)) as week,\n\tISNULL(SUM(ts.score), 0) as points\nfrom trello_cards tc \ninner join (\n\tselect\n\t\ttrello_id,\n\t\t(score * 1.) / COUNT(tcmr_inner.id) as score\n\tfrom trello_cards tc_inner\n\tinner join trello_card_member_relation tcmr_inner\n\ton tcmr_inner.trello_card_id = tc_inner.trello_id \n\tgroup by trello_id, score\n) ts\non tc.trello_id = ts.trello_id\ninner join trello_card_member_relation tcmr2\non tcmr2.trello_card_id = tc.trello_id \ninner join trello_members tm \non tm.trello_id = tcmr2.trello_member_id \ngroup by tm.full_name, DATETRUNC(week, DATEADD(week, 1, tc.done_time))\nhaving DATETRUNC(week, DATEADD(week, 1, tc.done_time)) between '${__from:date:iso}' and '${__to:date:iso}'",
+          "refId": "Team velocity by week",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Team velocity (SP)",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "A",
+                  "mode": "none"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "points Ilya Vinogradov"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttm.full_name as assignee,\n\tDATETRUNC(week, DATEADD(week, 1, tc.done_time)) as week,\n\tISNULL(SUM(ts.score), 0) as points\nfrom trello_cards tc \ninner join (\n\tselect\n\t\ttrello_id,\n\t\t(score * 1.) / COUNT(tcmr_inner.id) as score\n\tfrom trello_cards tc_inner\n\tinner join trello_card_member_relation tcmr_inner\n\ton tcmr_inner.trello_card_id = tc_inner.trello_id \n\tgroup by trello_id, score\n) ts\non tc.trello_id = ts.trello_id\ninner join trello_card_member_relation tcmr2\non tcmr2.trello_card_id = tc.trello_id \ninner join trello_members tm \non tm.trello_id = tcmr2.trello_member_id \ngroup by tm.full_name, DATETRUNC(week, DATEADD(week, 1, tc.done_time))\nhaving DATETRUNC(week, DATEADD(week, 1, tc.done_time)) between '${__from:date:iso}' and '${__to:date:iso}'",
+          "refId": "Team velocity by week",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Team velocity impact (SP)",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {}
+        }
+      ],
+      "type": "timeseries"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "DxMetricsDb",
+          "value": "DxMetricsDb"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource variable",
+        "multi": false,
+        "name": "DB_METRICS_DATASOURCE",
+        "options": [],
+        "query": "mssql",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "2023-06-06T20:00:00.000Z",
+    "to": "2023-08-31T19:59:59.000Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Grids team dashboard",
+  "uid": "a30c5198-89f2-4c9f-8c61-a967d42ba2d9",
+  "version": 3,
+  "weekStart": ""
+}

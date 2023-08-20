@@ -12,7 +12,7 @@ import { TrelloPluginDataConverter } from './trello-plugin-data.converter';
   imports: [
     HttpModule,
     ConfigModule.forRoot({
-      envFilePath: '.env.local',
+      envFilePath: envHelper.getEnvFile(),
     }),
     HttpAsyncModule,
   ],
