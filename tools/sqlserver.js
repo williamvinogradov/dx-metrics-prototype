@@ -1,21 +1,16 @@
 const { exec } = require('child_process');
+const { cmdOutputCallback, ACTIONS } = require('./common');
 
 /* -- Configuration -- */
-const ACTIONS = {
-  createVolume: 'create-volume',
-  runContainer: 'run-container',
-  stopContainer: 'stop-container',
-  pullContainer: 'pull-container',
-};
 const DB_SA_PASSWORD = process.env.DX_METRICS_LOCAL_DB_PASSWORD;
 const DB_PORT = 1433;
 const DB_CONTAINER_NAME = 'dx_metrics_mssql';
-const DB_CONTAINER = 'mcr.microsoft.com/mssql/server:2022-latest';
+const DB_IMAGE = 'mcr.microsoft.com/mssql/server:2022-latest';
 const VOLUME_NAME = 'dx_metrics_db_volume';
 
 /* -- Commands -- */
 const CMD_CREATE_VOLUME = `docker volume create ${VOLUME_NAME}`;
-const CMD_PULL_IMAGE = `docker pull ${DB_CONTAINER}`;
+const CMD_PULL_IMAGE = `docker pull ${DB_IMAGE}`;
 const CMD_RUN_DB_CONTAINER = `docker run \
 --platform linux/amd64 \
 -e "ACCEPT_EULA=Y" \
@@ -26,31 +21,23 @@ const CMD_RUN_DB_CONTAINER = `docker run \
 --mount source=${VOLUME_NAME},target=/var/opt/mssql/data \
 --name ${DB_CONTAINER_NAME} \
 --user root \
-${DB_CONTAINER}`;
+${DB_IMAGE}`;
 const CMD_STOP_DB_CONTAINER = `docker stop ${DB_CONTAINER_NAME}`;
 
 /* -- Utils -- */
-const cmdOutputCallback = (error, stdout, stderr) => {
-  if (error) {
-    console.log(`error: ${error.message}`);
-    return;
-  }
-  if (stderr) {
-    console.log(`stderr: ${stderr}`);
-    return;
-  }
-  console.log(stdout);
-};
-
 const getCommandToExecute = (action) => {
   switch (action) {
     case ACTIONS.createVolume:
+      console.log(`Creating volume ${VOLUME_NAME}...`);
       return CMD_CREATE_VOLUME;
-    case ACTIONS.pullContainer:
+    case ACTIONS.pullImage:
+      console.log(`Pulling image ${DB_IMAGE}...`);
       return CMD_PULL_IMAGE;
     case ACTIONS.runContainer:
+      console.log('Starting db container...');
       return CMD_RUN_DB_CONTAINER;
     case ACTIONS.stopContainer:
+      console.log('Stopping db container...');
       return CMD_STOP_DB_CONTAINER;
     default:
       throw Error(`unknown command: ${action}`);

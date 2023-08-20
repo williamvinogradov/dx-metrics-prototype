@@ -13,12 +13,10 @@ const createRotatedFile = () =>
     maxFiles: '7d',
   });
 
-const createLoggerInstance = (logLevel: string, isDev: boolean): Logger =>
+const createLoggerInstance = (logLevel: string): Logger =>
   createLogger({
     level: logLevel,
-    transports: isDev
-      ? [new transports.Console(), createRotatedFile()]
-      : [createRotatedFile()],
+    transports: [new transports.Console(), createRotatedFile()],
     format: format.combine(
       format.errors({ stack: true }),
       format.colorize(),
@@ -37,7 +35,6 @@ const createLoggerInstance = (logLevel: string, isDev: boolean): Logger =>
 
 export const LoggerProvider: Provider = {
   provide: Logger,
-  useFactory: () =>
-    createLoggerInstance(envHelper.getLoggerLogLevel(), envHelper.isDevMode()),
+  useFactory: () => createLoggerInstance(envHelper.getLoggerLogLevel()),
   scope: Scope.TRANSIENT,
 };

@@ -2,6 +2,7 @@ import { Module, Scope } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 import { LoggerProvider } from '../../logger';
+import { envHelper } from '../../utils';
 import { DbRepository } from './db.repository';
 import { ScDbRepository } from './sc-db.repository';
 import { TaskDbRepository } from './task-db.repository';
@@ -11,7 +12,7 @@ import { TeamSettingsDbRepository } from './team-settings-db.repository';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: '.env.local',
+      envFilePath: envHelper.getEnvFile(),
     }),
   ],
   controllers: [],

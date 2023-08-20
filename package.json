@@ -6,25 +6,39 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+
+    "build": "nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+
+    "docker:build": "docker build -t dx_metrics_app_image .",
+    "docker:start": "docker run -p4000:4000 --rm -d --name dx_metrics_app --env-file=.env.docker dx_metrics_app_image",
+    "docker:stop": "docker stop dx_metrics_app",
+    "docker:logs": "docker logs -f dx_metrics_app",
+
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db-create-volume": "env-cmd -f ./.env.local node ./tools/docker-db.js create-volume",
-    "db-pull-image": "env-cmd -f ./.env.local node ./tools/docker-db.js pull-container",
-    "db-start:arm": "env-cmd -f ./.env.local node ./tools/docker-db.js run-container",
-    "db-stop": "env-cmd -f ./.env.local node ./tools/docker-db.js stop-container",
-    "db-init:arm": "npm run db-pull-image && npm run db-create-volume && npm run db-start:arm",
-    "db-migrate": "env-cmd -f ./.env.local prisma migrate dev",
-    "db-fill-default-data": "env-cmd -f ./.env.local ts-node ./prisma/seed.ts"
+
+    "db:init:arm": "npm run db:pull-image && npm run db:create-volume",
+    "db:create-volume": "env-cmd -f ./.env.local node ./tools/sqlserver.js create-volume",
+    "db:pull-image": "env-cmd -f ./.env.local node ./tools/sqlserver.js pull-image",
+    "db:start:arm": "env-cmd -f ./.env.local node ./tools/sqlserver.js run-container",
+    "db:stop": "env-cmd -f ./.env.local node ./tools/sqlserver.js stop-container",
+    "db:migrate": "env-cmd -f ./.env.local prisma migrate dev",
+    "db:fill-default-data": "env-cmd -f ./.env.local ts-node ./prisma/seed.ts",
+
+    "grafana:init": "npm run grafana:pull-image && npm run grafana:create-volume",
+    "grafana:create-volume": "node ./tools/grafana.js create-volume",
+    "grafana:pull-image": "node ./tools/grafana.js pull-image",
+    "grafana:start": "node ./tools/grafana.js run-container",
+    "grafana:stop": "node ./tools/grafana.js stop-container"
   },
   "dependencies": {
     "@nestjs/axios": "3.0.0",

@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Logger } from 'winston';
 import { HttpAsyncService } from '../../shared/http-async';
-import { API_OPTIONS_TOKEN, ApiOptions } from './api-options';
+import {
+  TRELLO_API_OPTIONS_TOKEN,
+  TrelloApiOptions,
+} from './trello-api-options';
 import {
   TrelloCard,
   TrelloCardPluginData,
@@ -18,7 +21,7 @@ import { TrelloPluginDataConverter } from './trello-plugin-data.converter';
 @Injectable()
 export class TrelloApiRepository {
   constructor(
-    @Inject(API_OPTIONS_TOKEN) private readonly api: ApiOptions,
+    @Inject(TRELLO_API_OPTIONS_TOKEN) private readonly api: TrelloApiOptions,
     private readonly http: HttpAsyncService,
     private readonly pluginDataConverter: TrelloPluginDataConverter,
     private readonly logger: Logger,

@@ -25,4 +25,6 @@ export const envHelper = {
   },
   getLoggerLogLevel: () => process.env.LOGGER_LOG_LEVEL ?? 'info',
   isDevMode: () => process.env.APP_MODE === 'dev',
+  getEnvFile: () =>
+    process.env.ENVIRONMENT === 'docker' ? '.env.docker' : '.env.local',
 };
