@@ -8,4 +8,5 @@ export {
   TrelloUpdateLabelsCommand,
   TrelloUpdateMembersCommand,
   TrelloUpdateCardsCommand,
+  TrelloUpdateCustomFieldsCommand,
 } from './commands';

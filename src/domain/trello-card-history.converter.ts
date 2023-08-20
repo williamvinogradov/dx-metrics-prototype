@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { getMsFromTrelloItemId } from './utils';
 import {
   TrelloCard,
   TrelloCardHistoryData,
@@ -25,15 +24,16 @@ export class TrelloCardHistoryConverter {
     historyData: TrelloCardHistoryData,
     historyItems: TrelloCardHistoryItem[],
   ] {
-    if (!cardMoves.length) {
-      return this.convertEmptyMoveHistory(card);
-    }
-
     const historyItems = this.convertCardMovesToHistoryItems(
       card,
       lists,
       cardMoves,
     );
+
+    if (!historyItems.length) {
+      return this.convertEmptyMoveHistory(card);
+    }
+
     const doneTime = historyItems[historyItems.length - 1].startTime;
     const durationInMinutes = historyItems.reduce(
       (result, { durationInMinutes }) => {
@@ -58,7 +58,7 @@ export class TrelloCardHistoryConverter {
     historyData: TrelloCardHistoryData,
     historyItems: TrelloCardHistoryItem[],
   ] {
-    const doneTime = new Date(getMsFromTrelloItemId(card.id));
+    const doneTime = new Date(this.getMsFromTrelloItemId(card.id));
     return [
       // history data
       {
@@ -69,7 +69,7 @@ export class TrelloCardHistoryConverter {
         {
           cardId: card.id,
           listId: card.idList,
-          startTime: new Date(getMsFromTrelloItemId(card.id)),
+          startTime: new Date(this.getMsFromTrelloItemId(card.id)),
           endTime: null,
           durationInMinutes: null,
         },
@@ -105,7 +105,7 @@ export class TrelloCardHistoryConverter {
       }
 
       if (!result.length) {
-        const startTime = new Date(getMsFromTrelloItemId(card.id));
+        const startTime = new Date(this.getMsFromTrelloItemId(card.id));
         result.push({
           cardId: card.id,
           listId: listBeforeId,
@@ -182,5 +182,10 @@ export class TrelloCardHistoryConverter {
         0,
       ),
     );
+  }
+
+  // NOTE: Trello docs https://support.atlassian.com/trello/docs/getting-the-time-a-card-or-board-was-created/
+  private getMsFromTrelloItemId(id: string) {
+    return 1000 * parseInt(id.substring(0, 8), 16);
   }
 }

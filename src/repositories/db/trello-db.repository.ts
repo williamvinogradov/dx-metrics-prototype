@@ -12,17 +12,28 @@ import {
   TrelloMember,
 } from '../../domain';
 import { asyncForEach } from '../../utils';
+import { TransactionPrismaClient } from './types';
 
 @Injectable()
 export class TrelloDbRepository {
-  constructor(private prismaClient: PrismaClient, private logger: Logger) {
+  constructor(
+    private readonly prismaClient: PrismaClient,
+    private readonly logger: Logger,
+  ) {
     this.logger.defaultMeta = { service: this.constructor.name };
   }
 
-  async upsertLabels(labels: TrelloLabel[]): Promise<void> {
-    this.logger.log('info', `Upserting trello labels in db...`);
+  async upsertLabels(
+    labels: TrelloLabel[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log(
+      'verbose',
+      `Upserting ${labels.length} trello labels in db...`,
+    );
+
     await asyncForEach(labels, async (label) => {
-      await this.prismaClient.trello_labels.upsert({
+      await dbClient.trello_labels.upsert({
         where: { trello_id: label.id },
         update: {
           name: label.name,
@@ -34,13 +45,21 @@ export class TrelloDbRepository {
         },
       });
     });
-    this.logger.log('info', `Upserted trello labels in db`);
+
+    this.logger.log('verbose', `Upserted ${labels.length} trello labels in db`);
   }
 
-  async upsertMembers(members: TrelloMember[]): Promise<void> {
-    this.logger.log('info', `Upserting trello members in db...`);
+  async upsertMembers(
+    members: TrelloMember[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log(
+      'verbose',
+      `Upserting ${members.length} trello members in db...`,
+    );
+
     await asyncForEach(members, async (member) => {
-      await this.prismaClient.trello_members.upsert({
+      await dbClient.trello_members.upsert({
         where: { trello_id: member.id },
         update: {
           full_name: member.fullName,
@@ -52,13 +71,24 @@ export class TrelloDbRepository {
         },
       });
     });
-    this.logger.log('info', `Upserted trello members in db`);
+
+    this.logger.log(
+      'verbose',
+      `Upserted ${members.length} trello members in db`,
+    );
   }
 
-  async upsertLists(lists: TrelloList[]): Promise<void> {
-    this.logger.log('info', 'Upserting trello lists in db...');
+  async upsertLists(
+    lists: TrelloList[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log(
+      'verbose',
+      `Upserting ${lists.length} trello lists in db...`,
+    );
+
     await asyncForEach(lists, async (list) => {
-      await this.prismaClient.trello_lists.upsert({
+      await dbClient.trello_lists.upsert({
         where: { trello_id: list.id },
         update: {
           name: list.name,
@@ -73,23 +103,29 @@ export class TrelloDbRepository {
         },
       });
     });
-    this.logger.log('info', 'Upserted trello lists in db');
+
+    this.logger.log('verbose', `Upserted ${lists.length} trello lists in db`);
   }
 
-  async upsertCustomFields(customFields: TrelloCustomField[]): Promise<void> {
+  async upsertCustomFields(
+    customFields: TrelloCustomField[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       `Upserting ${customFields.length} trello custom fields...`,
     );
+
     await asyncForEach(customFields, async ({ id, name }) => {
-      await this.prismaClient.trello_custom_fields.upsert({
+      await dbClient.trello_custom_fields.upsert({
         where: { trello_id: id },
         update: { name },
         create: { trello_id: id, name },
       });
     });
+
     this.logger.log(
-      'info',
+      'verbose',
       `Upserted ${customFields.length} trello custom fields`,
     );
   }
@@ -100,18 +136,21 @@ export class TrelloDbRepository {
       isProcessed?: boolean;
       listType?: TrelloListType;
     } = {},
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<TrelloList[]> {
     this.logger.log(
-      'info',
+      'verbose',
       `Selecting trello lists (board: ${boardId}) with options ${JSON.stringify(
         options,
       )} from db...`,
     );
+
     const requestOptions = {
       type: options.listType,
       is_processed: options.isProcessed,
     };
-    return this.prismaClient.trello_lists
+
+    return dbClient.trello_lists
       .findMany({
         where: {
           trello_board_id: boardId,
@@ -127,7 +166,7 @@ export class TrelloDbRepository {
         }));
 
         this.logger.log(
-          'info',
+          'verbose',
           `Selected ${
             result.length
           } trello lists (board: ${boardId}) with options ${JSON.stringify(
@@ -142,17 +181,20 @@ export class TrelloDbRepository {
   async updateListProcessedStatus(
     listId: string,
     isProcessed: boolean,
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       `Updating trello lists ${listId} is processed: ${isProcessed}...`,
     );
-    await this.prismaClient.trello_lists.update({
+
+    await dbClient.trello_lists.update({
       where: { trello_id: listId },
       data: { is_processed: isProcessed },
     });
+
     this.logger.log(
-      'info',
+      'verbose',
       `Updated trello lists ${listId} is processed: ${isProcessed}`,
     );
   }
@@ -160,9 +202,11 @@ export class TrelloDbRepository {
   async upsertTrelloCard(
     taskId: string,
     cardFull: TrelloCardFull,
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
-    this.logger.log('info', 'Inserting trello card in db...');
-    await this.prismaClient.trello_cards.upsert({
+    this.logger.log('verbose', 'Inserting trello card in db...');
+
+    await dbClient.trello_cards.upsert({
       where: { trello_id: cardFull.id },
       update: {
         board_id: cardFull.idBoard,
@@ -177,18 +221,26 @@ export class TrelloDbRepository {
         duration_minutes: cardFull.durationInMinutes ?? 0,
       },
     });
-    this.logger.log('info', 'Inserted trello card in db');
+
+    this.logger.log('verbose', 'Inserted trello card in db');
   }
 
-  async selectTrelloCardTaskId(cardId: string): Promise<string | null> {
-    this.logger.log('info', `Selecting the trello card ${cardId} task id...`);
-    const card = await this.prismaClient.trello_cards.findFirst({
+  async selectTrelloCardTaskId(
+    cardId: string,
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<string | null> {
+    this.logger.log(
+      'verbose',
+      `Selecting the trello card ${cardId} task id...`,
+    );
+
+    const card = await dbClient.trello_cards.findFirst({
       where: { trello_id: cardId },
     });
 
     if (!card) {
       this.logger.log(
-        'info',
+        'verbose',
         `The trello card ${cardId} task id doesn't found.`,
       );
 
@@ -196,7 +248,7 @@ export class TrelloDbRepository {
     }
 
     this.logger.log(
-      'info',
+      'verbose',
       `The trello card ${cardId} task id: ${card.task_id}`,
     );
 
@@ -206,59 +258,83 @@ export class TrelloDbRepository {
   async insertTrelloCardLabels(
     cardId: string,
     labelIds: string[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       'Inserting trello card -> labels relations in db...',
     );
-    await this.prismaClient.trello_card_label_relation.createMany({
+
+    await dbClient.trello_card_label_relation.createMany({
       data: labelIds.map((labelId) => ({
         trello_card_id: cardId,
         trello_label_id: labelId,
       })),
     });
-    this.logger.log('info', 'Inserted trello card -> labels relations in db');
+
+    this.logger.log(
+      'verbose',
+      'Inserted trello card -> labels relations in db',
+    );
   }
 
-  async deleteTrelloCardLabels(cardId: string): Promise<void> {
-    this.logger.log('info', `Deleting trello card ${cardId} labels...`);
-    await this.prismaClient.trello_card_label_relation.deleteMany({
+  async deleteTrelloCardLabels(
+    cardId: string,
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log('verbose', `Deleting trello card ${cardId} labels...`);
+
+    await dbClient.trello_card_label_relation.deleteMany({
       where: { trello_card_id: cardId },
     });
-    this.logger.log('info', `Deleted trello card ${cardId} labels`);
+
+    this.logger.log('verbose', `Deleted trello card ${cardId} labels`);
   }
 
   async insertTrelloCardMembers(
     cardId: string,
     memberIds: string[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       'Inserting trello card -> members relations in db...',
     );
-    await this.prismaClient.trello_card_member_relation.createMany({
+
+    await dbClient.trello_card_member_relation.createMany({
       data: memberIds.map((memberId) => ({
         trello_card_id: cardId,
         trello_member_id: memberId,
       })),
     });
-    this.logger.log('info', 'Inserted trello card -> members relations in db');
+
+    this.logger.log(
+      'verbose',
+      'Inserted trello card -> members relations in db',
+    );
   }
 
-  async deleteTrelloCardMembers(cardId: string): Promise<void> {
-    this.logger.log('info', `Deleting trello card ${cardId} members...`);
-    await this.prismaClient.trello_card_member_relation.deleteMany({
+  async deleteTrelloCardMembers(
+    cardId: string,
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log('verbose', `Deleting trello card ${cardId} members...`);
+
+    await dbClient.trello_card_member_relation.deleteMany({
       where: { trello_card_id: cardId },
     });
-    this.logger.log('info', `Deleted trello card ${cardId} members`);
+
+    this.logger.log('verbose', `Deleted trello card ${cardId} members`);
   }
 
   async insertTrelloCardHistory(
     cardId: string,
     historyItems: TrelloCardHistoryItem[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
-    this.logger.log('info', 'Inserting trello card history in db...');
-    await this.prismaClient.trello_card_history.createMany({
+    this.logger.log('verbose', 'Inserting trello card history in db...');
+
+    await dbClient.trello_card_history.createMany({
       data: historyItems.map((history) => ({
         trello_card_id: cardId,
         trello_list_id: history.listId,
@@ -267,26 +343,34 @@ export class TrelloDbRepository {
         duration_minutes: history.durationInMinutes,
       })),
     });
-    this.logger.log('info', 'Inserted trello card history in db');
+
+    this.logger.log('verbose', 'Inserted trello card history in db');
   }
 
-  async deleteTrelloCardHistory(cardId: string): Promise<void> {
-    this.logger.log('info', `Deleting trello card ${cardId} history...`);
-    await this.prismaClient.trello_card_history.deleteMany({
+  async deleteTrelloCardHistory(
+    cardId: string,
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
+    this.logger.log('verbose', `Deleting trello card ${cardId} history...`);
+
+    await dbClient.trello_card_history.deleteMany({
       where: { trello_card_id: cardId },
     });
-    this.logger.log('info', `Deleted trello card ${cardId} history`);
+
+    this.logger.log('verbose', `Deleted trello card ${cardId} history`);
   }
 
   async insertTrelloCardCustomFieldsData(
     cardId: string,
     customFieldsData: TrelloCardCustomFieldData[],
+    dbClient: TransactionPrismaClient = this.prismaClient,
   ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       `Inserting trello card ${cardId} custom fields data...`,
     );
-    await this.prismaClient.trello_card_custom_field_data.createMany({
+
+    await dbClient.trello_card_custom_field_data.createMany({
       data: customFieldsData.map((data) => {
         const valueNumber = Number.isNaN(data.value.number)
           ? null
@@ -299,20 +383,29 @@ export class TrelloDbRepository {
         };
       }),
     });
+
     this.logger.log(
-      'info',
+      'verbose',
       `Inserted trello card ${cardId} custom fields data`,
     );
   }
 
-  async deleteTrelloCardCustomFieldsData(cardId: string): Promise<void> {
+  async deleteTrelloCardCustomFieldsData(
+    cardId: string,
+    dbClient: TransactionPrismaClient = this.prismaClient,
+  ): Promise<void> {
     this.logger.log(
-      'info',
+      'verbose',
       `Deleting trello card ${cardId} custom fields data...`,
     );
-    await this.prismaClient.trello_card_custom_field_data.deleteMany({
+
+    await dbClient.trello_card_custom_field_data.deleteMany({
       where: { trello_card_id: cardId },
     });
-    this.logger.log('info', `Deleted trello card ${cardId} custom fields data`);
+
+    this.logger.log(
+      'verbose',
+      `Deleted trello card ${cardId} custom fields data`,
+    );
   }
 }

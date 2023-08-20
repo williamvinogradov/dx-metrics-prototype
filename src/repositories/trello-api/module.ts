@@ -1,11 +1,12 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import * as process from 'process';
 import { LoggerProvider } from '../../logger';
-import { HttpAsyncService } from '../../services/http-async.service';
+import { HttpAsyncModule } from '../../shared/http-async';
+import { envHelper } from '../../utils';
 import { API_OPTIONS_TOKEN } from './api-options';
 import { TrelloApiRepository } from './trello-api.repository';
+import { TrelloPluginDataConverter } from './trello-plugin-data.converter';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { TrelloApiRepository } from './trello-api.repository';
     ConfigModule.forRoot({
       envFilePath: '.env.local',
     }),
+    HttpAsyncModule,
   ],
   controllers: [],
   providers: [
@@ -20,12 +22,12 @@ import { TrelloApiRepository } from './trello-api.repository';
     {
       provide: API_OPTIONS_TOKEN,
       useValue: {
-        url: 'https://api.trello.com/1',
-        key: process.env.TRELLO_API_KEY,
-        token: process.env.TRELLO_API_TOKEN,
+        url: envHelper.getTrelloApiLink(),
+        key: envHelper.getTrelloApiKey(),
+        token: envHelper.getTrelloApiToken(),
       },
     },
-    HttpAsyncService,
+    TrelloPluginDataConverter,
     TrelloApiRepository,
   ],
   exports: [TrelloApiRepository],

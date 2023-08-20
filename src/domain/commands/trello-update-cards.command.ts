@@ -1,17 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Logger } from 'winston';
-import {
-  ScDbRepository,
-  TaskDbRepository,
-  TrelloDbRepository,
-} from '../../repositories/db';
+import { DbRepository, TransactionPrismaClient } from '../../repositories/db';
 import { TrelloApiRepository } from '../../repositories/trello-api';
 import { asyncForEach } from '../../utils';
 import {
   TaskScTicketData,
   TrelloCard,
+  TrelloCardCustomFieldData,
   TrelloCardHistoryData,
   TrelloCardHistoryItem,
+  TrelloCardPluginData,
   TrelloList,
   TrelloListType,
 } from '../model';
@@ -32,13 +30,25 @@ interface HandleContext {
   lists: TrelloList[];
 }
 
+interface CardTrelloData {
+  pluginsData: TrelloCardPluginData;
+  history: [
+    cardHistoryData: TrelloCardHistoryData,
+    cardHistoryItems: TrelloCardHistoryItem[],
+  ];
+  customFieldsData: TrelloCardCustomFieldData[];
+}
+
+interface CardHandleContext extends HandleContext {
+  dbClient: TransactionPrismaClient;
+  cardTrelloData: CardTrelloData;
+}
+
 @Injectable()
 export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdateCardsCommand> {
   constructor(
-    private readonly trelloDbRepo: TrelloDbRepository,
+    private readonly dbRepo: DbRepository,
     private readonly trelloApiRepo: TrelloApiRepository,
-    private readonly scDbRepo: ScDbRepository,
-    private readonly taskDbRepo: TaskDbRepository,
     private readonly historyConverter: TrelloCardHistoryConverter,
     logger: Logger,
   ) {
@@ -46,115 +56,281 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
   }
 
   async handleImplementation(command: TrelloUpdateCardsCommand): Promise<void> {
-    const lists = await this.trelloDbRepo.selectTeamLists(command.boardId, {
+    this.logger.log(
+      'verbose',
+      `Start processing cards from the board ${command.boardId}...`,
+    );
+
+    const allLists = await this.dbRepo.trello.selectTeamLists(command.boardId, {
       isProcessed: false,
     });
-    const handleContext = { command, lists };
+    const doneLists = allLists.filter(
+      ({ type }) => type === TrelloListType.done,
+    );
 
-    await asyncForEach(
-      lists.filter(({ type }) => type === TrelloListType.done),
-      async ({ id }) => {
-        await this.processListCards(id, handleContext);
-        await this.trelloDbRepo.updateListProcessedStatus(id, true);
-      },
+    this.logger.log(
+      'verbose',
+      `Received ${doneLists.length} unprocessed done lists from the board ${command.boardId}`,
+    );
+
+    if (!doneLists.length) {
+      this.logger.log(
+        'info',
+        `The board ${command.boardId} doesn't contains unprocessed done lists. There is nothing to process.`,
+      );
+
+      return;
+    }
+
+    const handleContext = { command, lists: allLists };
+
+    await asyncForEach(doneLists, async (list) => {
+      await this.processListCards(list, handleContext);
+      await this.dbRepo.trello.updateListProcessedStatus(list.id, true);
+
+      this.logger.log(
+        'verbose',
+        `The list ${this.getListLogInfo(list)} marked as processed`,
+      );
+    });
+
+    this.logger.log(
+      'verbose',
+      `Cards from the board ${command.boardId} processed`,
     );
   }
 
   private async processListCards(
-    listId: string,
+    list: TrelloList,
     handleContext: HandleContext,
   ): Promise<void> {
     try {
-      const cards = await this.trelloApiRepo.getListCards(listId);
-      await asyncForEach(cards, async (card) =>
-        this.processCard(card, handleContext),
+      this.logger.log(
+        'verbose',
+        `Start processing list ${this.getListLogInfo(list)} cards...`,
       );
-      this.logger.log('info', `List ${listId} processed`);
+
+      const cards = await this.trelloApiRepo.getListCards(list.id);
+
+      this.logger.log(
+        'verbose',
+        `Received ${cards.length} cards from the list ${this.getListLogInfo(
+          list,
+        )}`,
+      );
+
+      let processedCardsCount = 0;
+      let failedCardsCount = 0;
+      await asyncForEach(cards, async (card) => {
+        const result = await this.processCard(card, handleContext);
+
+        if (result) {
+          processedCardsCount += 1;
+        } else {
+          failedCardsCount += 1;
+        }
+      });
+
+      this.logger.log(
+        'info',
+        `The list ${this.getListLogInfo(list)} cards processed.\n\
+         Processed cards: ${processedCardsCount}.\n\
+         Failed cards: ${failedCardsCount}.`,
+      );
     } catch (error) {
-      this.logger.log('error', `Failed to process list ${listId}: `, error);
+      this.logger.log(
+        'warn',
+        `Failed to process the list ${this.getListLogInfo(list)}: `,
+        error,
+      );
     }
   }
 
   private async processCard(
     card: TrelloCard,
     handleContext: HandleContext,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
-      const taskId = await this.trelloDbRepo.selectTrelloCardTaskId(card.id);
+      this.logger.log(
+        'verbose',
+        `Start processing the card ${this.getCardLogInfo(card)}...`,
+      );
 
-      if (taskId) {
-        await this.processExistingCard(taskId, card, handleContext);
-      } else {
-        await this.processNewCard(card, handleContext);
-      }
+      // NOTE: It's important to don't do any API requests inside the db transaction!
+      const cardTrelloData = await this.getCardTrelloData(card, handleContext);
+      const taskId = await this.dbRepo.trello.selectTrelloCardTaskId(card.id);
 
-      this.logger.log('info', `Card ${card.id} processed`);
+      await this.dbRepo.$transaction<void>(async (dbClient) => {
+        const cardHandleContext = {
+          ...handleContext,
+          dbClient,
+          cardTrelloData,
+        };
+
+        if (taskId) {
+          this.logger.log(
+            'verbose',
+            `The card ${this.getCardLogInfo(card)} already exists in the db.`,
+          );
+
+          await this.processExistingCard(taskId, card, cardHandleContext);
+        } else {
+          this.logger.log(
+            'verbose',
+            `The card ${this.getCardLogInfo(card)} doesn't exists in the db`,
+          );
+
+          await this.processNewCard(card, cardHandleContext);
+        }
+      });
+
+      this.logger.log(
+        'verbose',
+        `The card ${this.getCardLogInfo(card)} is processed`,
+      );
+
+      return true;
     } catch (error) {
-      this.logger.log('error', `Failed to process card ${card.id}: `, error);
+      this.logger.log(
+        'warn',
+        `Failed to process the card ${this.getCardLogInfo(card)}: `,
+        error,
+      );
+
+      return false;
     }
+  }
+
+  private async getCardTrelloData(
+    card: TrelloCard,
+    handleContext: HandleContext,
+  ): Promise<CardTrelloData> {
+    this.logger.log(
+      'verbose',
+      `Getting the card ${this.getCardLogInfo(
+        card,
+      )} related data from trello...`,
+    );
+
+    const [pluginsData, [historyData, historyItems], customFieldsData] =
+      await Promise.all([
+        this.trelloApiRepo.getCardPluginData(card.id),
+        this.getTrelloCardHistory(card, handleContext),
+        this.trelloApiRepo.getCardCustomFieldsData(card.id),
+      ]);
+
+    this.logger.log(
+      'verbose',
+      `Received the card ${this.getCardLogInfo(card)} related data from trello`,
+    );
+
+    return {
+      pluginsData,
+      history: [historyData, historyItems],
+      customFieldsData,
+    };
   }
 
   private async processNewCard(
     card: TrelloCard,
-    handleContext: HandleContext,
+    cardHandleContext: CardHandleContext,
   ): Promise<void> {
     const [scTicketNumber, scTicketData] = await this.findScData(
       card,
-      handleContext.command.nameScRegExp,
+      cardHandleContext,
     );
+
     const taskId = scTicketData
       ? scTicketData.taskId
-      : await this.taskDbRepo.insertTask();
+      : await this.dbRepo.task.insertTask();
 
     if (scTicketNumber && !scTicketData) {
-      await this.scDbRepo.insertScTicketData({
+      await this.dbRepo.sc.insertScTicketData({
         taskId,
         ticketNumber: scTicketNumber,
       });
     }
 
-    await this.insertTrelloData(taskId, card, handleContext);
+    await this.insertTrelloData(taskId, card, cardHandleContext);
   }
 
   private async processExistingCard(
     taskId: string,
     card: TrelloCard,
-    handleContext: HandleContext,
+    cardHandleContext: CardHandleContext,
   ): Promise<void> {
-    await this.trelloDbRepo.deleteTrelloCardMembers(card.id);
-    await this.trelloDbRepo.deleteTrelloCardLabels(card.id);
-    await this.trelloDbRepo.deleteTrelloCardHistory(card.id);
-    await this.trelloDbRepo.deleteTrelloCardCustomFieldsData(card.id);
+    const { dbClient } = cardHandleContext;
 
-    await this.insertTrelloData(taskId, card, handleContext);
+    this.logger.log(
+      'verbose',
+      `Clearing the card ${this.getCardLogInfo(card)} related data...`,
+    );
+
+    await this.dbRepo.trello.deleteTrelloCardMembers(card.id, dbClient);
+    await this.dbRepo.trello.deleteTrelloCardLabels(card.id, dbClient);
+    await this.dbRepo.trello.deleteTrelloCardHistory(card.id, dbClient);
+    await this.dbRepo.trello.deleteTrelloCardCustomFieldsData(
+      card.id,
+      dbClient,
+    );
+
+    this.logger.log(
+      'verbose',
+      `The card ${this.getCardLogInfo(card)} related data is cleared`,
+    );
+
+    await this.insertTrelloData(taskId, card, cardHandleContext);
   }
 
   private async insertTrelloData(
     taskId: string,
     card: TrelloCard,
-    handleContext: HandleContext,
+    cardHandleContext: CardHandleContext,
   ): Promise<void> {
-    const [
-      cardPluginData,
-      [cardHistoryData, cardHistoryItems],
-      cardCustomFieldsData,
-    ] = await Promise.all([
-      this.trelloApiRepo.getCardPluginData(card.id),
-      this.getTrelloCardHistory(card, handleContext),
-      this.trelloApiRepo.getCardCustomFieldsData(card.id),
-    ]);
+    const {
+      dbClient,
+      cardTrelloData: {
+        pluginsData,
+        history: [historyData, historyItems],
+        customFieldsData,
+      },
+    } = cardHandleContext;
 
-    await this.trelloDbRepo.upsertTrelloCard(taskId, {
-      ...card,
-      ...cardPluginData,
-      ...cardHistoryData,
-    });
-    await this.trelloDbRepo.insertTrelloCardMembers(card.id, card.idMembers);
-    await this.trelloDbRepo.insertTrelloCardLabels(card.id, card.idLabels);
-    await this.trelloDbRepo.insertTrelloCardHistory(card.id, cardHistoryItems);
-    await this.trelloDbRepo.insertTrelloCardCustomFieldsData(
+    await this.dbRepo.trello.upsertTrelloCard(
+      taskId,
+      {
+        ...card,
+        ...pluginsData,
+        ...historyData,
+      },
+      dbClient,
+    );
+    await this.dbRepo.trello.insertTrelloCardMembers(
       card.id,
-      cardCustomFieldsData,
+      card.idMembers,
+      dbClient,
+    );
+    await this.dbRepo.trello.insertTrelloCardLabels(
+      card.id,
+      card.idLabels,
+      dbClient,
+    );
+    await this.dbRepo.trello.insertTrelloCardHistory(
+      card.id,
+      historyItems,
+      dbClient,
+    );
+    await this.dbRepo.trello.insertTrelloCardCustomFieldsData(
+      card.id,
+      customFieldsData,
+      dbClient,
+    );
+
+    this.logger.log(
+      'verbose',
+      `The card ${this.getCardLogInfo(
+        card,
+      )} related data from trello inserted in the db`,
     );
   }
 
@@ -167,15 +343,34 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
     const { lists } = handleContext;
     const cardMoves = await this.trelloApiRepo.getCardMoveHistory(card.id);
 
-    return this.historyConverter.convert(card, lists, cardMoves);
+    this.logger.log(
+      'verbose',
+      `Received the card ${this.getCardLogInfo(card)} ${
+        cardMoves.length
+      } move history items`,
+    );
+
+    const cardHistory = this.historyConverter.convert(card, lists, cardMoves);
+
+    this.logger.log(
+      'verbose',
+      `The card ${this.getCardLogInfo(card)} moving history: ${JSON.stringify(
+        cardHistory,
+      )}`,
+    );
+
+    return cardHistory;
   }
 
   private async findScData(
     card: TrelloCard,
-    nameScRegExp: RegExp,
+    cardHandleContext: CardHandleContext,
   ): Promise<
     [scTicketnumber: string | null, scTicketData: TaskScTicketData | null]
   > {
+    const {
+      command: { nameScRegExp },
+    } = cardHandleContext;
     const scTicketNumber = this.tryGetScTicketFromTrelloCard(
       card,
       nameScRegExp,
@@ -185,15 +380,23 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
       return [null, null];
     }
 
-    const scTicketData = await this.getScTicketData(scTicketNumber);
+    const scTicketData = await this.getScTicketData(
+      scTicketNumber,
+      cardHandleContext,
+    );
+
     return [scTicketNumber, scTicketData];
   }
 
   private async getScTicketData(
     scTicketNumber: string | null,
+    { dbClient }: CardHandleContext,
   ): Promise<TaskScTicketData | null> {
     return scTicketNumber
-      ? await this.scDbRepo.selectScDataByTicketNumber(scTicketNumber)
+      ? await this.dbRepo.sc.selectScDataByTicketNumber(
+          scTicketNumber,
+          dbClient,
+        )
       : null;
   }
 
@@ -203,5 +406,13 @@ export class TrelloUpdateCardsCommandHandler extends CommandHandler<TrelloUpdate
   ): string | null {
     const ticketIdFromNameMatch = name.match(nameScRegExp);
     return ticketIdFromNameMatch ? ticketIdFromNameMatch[0] : null;
+  }
+
+  private getListLogInfo(list: TrelloList): string {
+    return `"${list.name} (id: ${list.id})"`;
+  }
+
+  private getCardLogInfo(card: TrelloCard): string {
+    return `"${card.name} (id: ${card.id})"`;
   }
 }
