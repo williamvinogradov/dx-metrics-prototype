@@ -4,7 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { LoggerProvider } from '../../logger';
 import { HttpAsyncModule } from '../../shared/http-async';
 import { envHelper } from '../../utils';
-import { API_OPTIONS_TOKEN } from './api-options';
+import { TRELLO_API_OPTIONS_TOKEN } from './trello-api-options';
 import { TrelloApiRepository } from './trello-api.repository';
 import { TrelloPluginDataConverter } from './trello-plugin-data.converter';
 
@@ -20,7 +20,7 @@ import { TrelloPluginDataConverter } from './trello-plugin-data.converter';
   providers: [
     LoggerProvider,
     {
-      provide: API_OPTIONS_TOKEN,
+      provide: TRELLO_API_OPTIONS_TOKEN,
       useValue: {
         url: envHelper.getTrelloApiLink(),
         key: envHelper.getTrelloApiKey(),
