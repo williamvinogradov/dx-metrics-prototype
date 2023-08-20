@@ -10,16 +10,6 @@ datasource db {
   url      = env("DX_METRICS_DB_URL")
 }
 
-model trello_team_settings {
-  id                            Int      @id @default(autoincrement())
-  created_time                  DateTime @default(now())
-  updated_time                  DateTime @updatedAt
-  board_id                      String   @unique
-  done_list_name_reg_exp        String
-  work_list_name_reg_exp        String
-  trello_name_sc_ticket_reg_exp String
-}
-
 model tasks {
   id             String          @id @default(uuid())
   created_time   DateTime        @default(now())
@@ -139,4 +129,25 @@ model sc_ticket_data {
   ticket_number String   @unique
   tasks_id      String   @unique
   tasks         tasks    @relation(fields: [tasks_id], references: [id])
+}
+
+// === Teams ===
+model teams {
+  id            Int             @id @default(autoincrement())
+  created_time  DateTime        @default(now())
+  updated_time  DateTime        @updatedAt
+  team_name     String          @unique
+  team_settings team_settings[]
+}
+
+model team_settings {
+  id                            Int      @id @default(autoincrement())
+  created_time                  DateTime @default(now())
+  updated_time                  DateTime @updatedAt
+  team_id                       Int
+  team                          teams    @relation(fields: [team_id], references: [id])
+  trello_board_id               String   @unique
+  trello_done_list_name_reg_exp String
+  trello_work_list_name_reg_exp String
+  trello_name_sc_ticket_reg_exp String
 }

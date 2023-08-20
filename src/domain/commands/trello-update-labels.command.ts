@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Logger } from 'winston';
-import { TrelloDbRepository } from '../../repositories/db';
+import { DbRepository } from '../../repositories/db';
 import { TrelloApiRepository } from '../../repositories/trello-api';
 import { Command, CommandHandler } from './core';
 
@@ -13,7 +13,7 @@ export class TrelloUpdateLabelsCommand extends Command {
 @Injectable()
 export class TrelloUpdateLabelsCommandHandler extends CommandHandler<TrelloUpdateLabelsCommand> {
   constructor(
-    private readonly trelloDbRepo: TrelloDbRepository,
+    private readonly dbRepo: DbRepository,
     private readonly trelloApiRepo: TrelloApiRepository,
     logger: Logger,
   ) {
@@ -23,7 +23,20 @@ export class TrelloUpdateLabelsCommandHandler extends CommandHandler<TrelloUpdat
   async handleImplementation({
     boardId,
   }: TrelloUpdateLabelsCommand): Promise<void> {
+    this.logger.log(
+      'verbose',
+      `Updating labels for trello board ${boardId}...`,
+    );
+
     const labels = await this.trelloApiRepo.getBoardLabels(boardId);
-    await this.trelloDbRepo.upsertLabels(labels);
+
+    this.logger.log(
+      'verbose',
+      `Received ${labels.length} labels from trello board ${boardId}`,
+    );
+
+    await this.dbRepo.trello.upsertLabels(labels);
+
+    this.logger.log('verbose', `Updated labels for trello board ${boardId}`);
   }
 }

@@ -24,7 +24,7 @@
     "db-stop": "env-cmd -f ./.env.local node ./tools/docker-db.js stop-container",
     "db-init:arm": "npm run db-pull-image && npm run db-create-volume && npm run db-start:arm",
     "db-migrate": "env-cmd -f ./.env.local prisma migrate dev",
-    "db-fill-config-data": "env-cmd -f ./.env.local ts-node ./prisma/seed.ts"
+    "db-fill-default-data": "env-cmd -f ./.env.local ts-node ./prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/axios": "3.0.0",
@@ -36,7 +36,8 @@
     "axios": "1.4.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "winston": "3.10.0"
+    "winston": "3.10.0",
+    "winston-daily-rotate-file": "4.7.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",

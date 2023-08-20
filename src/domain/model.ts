@@ -1,8 +1,18 @@
+export interface TeamSettings {
+  teamName: string;
+  boardId: string;
+  nameScRegExp: RegExp;
+  workListRegExp: RegExp;
+  doneListRegExp: RegExp;
+}
+
+// === SC ===
 export interface TaskScTicketData {
   taskId: string;
   ticketNumber: string;
 }
 
+// === Trello ===
 export enum TrelloListType {
   work = 0,
   done = 1,
@@ -15,10 +25,21 @@ export interface TrelloList {
   idBoard: string;
 }
 
+export interface TrelloMember {
+  id: string;
+  fullName: string;
+  username: string;
+}
+
 export interface TrelloLabel {
   id: string;
   name: string;
   idBoard: string;
+}
+
+export interface TrelloCustomField {
+  id: string;
+  name: string;
 }
 
 export interface TrelloCard {
@@ -28,38 +49,6 @@ export interface TrelloCard {
   idList: string;
   idBoard: string;
   name: string;
-}
-
-export interface TrelloCustomField {
-  id: string;
-  name: string;
-}
-
-export interface TrelloCardPluginData {
-  score: number | null;
-}
-
-export interface TrelloCardHistoryData {
-  doneTime: Date;
-  durationInMinutes: number | null;
-}
-
-export interface TrelloCardFull
-  extends TrelloCard,
-    TrelloCardPluginData,
-    TrelloCardHistoryData {}
-
-export interface TrelloMember {
-  id: string;
-  fullName: string;
-  username: string;
-}
-
-export interface TrelloTeamSettings {
-  boardId: string;
-  nameScRegExp: RegExp;
-  workListRegExp: RegExp;
-  doneListRegExp: RegExp;
 }
 
 export interface TrelloCardMoveAction {
@@ -90,3 +79,17 @@ export interface TrelloCardCustomFieldData {
     number?: number;
   };
 }
+
+export interface TrelloCardPluginData {
+  score: number | null;
+}
+
+export interface TrelloCardHistoryData {
+  doneTime: Date;
+  durationInMinutes: number | null;
+}
+
+export interface TrelloCardFull
+  extends TrelloCard,
+    TrelloCardPluginData,
+    TrelloCardHistoryData {}

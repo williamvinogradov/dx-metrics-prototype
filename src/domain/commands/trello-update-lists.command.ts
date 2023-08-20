@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Logger } from 'winston';
-import { TrelloDbRepository } from '../../repositories/db';
+import { DbRepository } from '../../repositories/db';
 import { TrelloApiRepository } from '../../repositories/trello-api';
 import { Command, CommandHandler } from './core';
 
@@ -17,7 +17,7 @@ export class TrelloUpdateListsCommand extends Command {
 @Injectable()
 export class TrelloUpdateListsCommandHandler extends CommandHandler<TrelloUpdateListsCommand> {
   constructor(
-    private readonly trelloDbRepo: TrelloDbRepository,
+    private readonly dbRepo: DbRepository,
     private readonly trelloApiRepo: TrelloApiRepository,
     logger: Logger,
   ) {
@@ -30,11 +30,21 @@ export class TrelloUpdateListsCommandHandler extends CommandHandler<TrelloUpdate
     workListRegExp,
     doneListRegExp,
   }: TrelloUpdateListsCommand): Promise<void> {
+    this.logger.log('verbose', `Updating lists for trello board ${boardId}...`);
+
     const lists = await this.trelloApiRepo.getBoardLists(
       boardId,
       workListRegExp,
       doneListRegExp,
     );
-    await this.trelloDbRepo.upsertLists(lists);
+
+    this.logger.log(
+      'verbose',
+      `Received ${lists.length} lists from trello board ${boardId}`,
+    );
+
+    await this.dbRepo.trello.upsertLists(lists);
+
+    this.logger.log('verbose', `Updated lists for trello board ${boardId}`);
   }
 }

@@ -1,1 +1,1 @@
-export * from './trello-data-api.controller';
+export * from './team-api.controller';
