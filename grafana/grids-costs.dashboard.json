@@ -1,0 +1,1857 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 6,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [],
+      "title": "Grids team",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "unit": "$"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: bug 🐞"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: development"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: management 🎓"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: routine"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: demo"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: support help 🎗️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: infrastructure 🛠"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: example"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "type: research 🔎"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        },
+        "pieType": "donut",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttl.name as label_name,\n\tsum((tch.duration_minutes * 1.0 / mc.member_count) / (24.0 * 60) * tm.salary_per_day) as cost\nfrom trello_cards tc \nleft join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \nleft join trello_labels tl \non tl.trello_id = tclr.trello_label_id \ninner join trello_card_member_relation tcmr \non tcmr.trello_card_id = tc.trello_id \nleft join trello_members tm \non tm.trello_id = tcmr.trello_member_id\nleft join trello_card_history tch \non tch.trello_card_id = tc.trello_id \nleft join (\n\tselect \n\t\ttc2.trello_id as card_id,\n\t\tcount(tcmr2.trello_member_id) as member_count\n\tfrom trello_cards tc2 \n\tleft join trello_card_member_relation tcmr2 \n\ton tcmr2.trello_card_id = tc2.trello_id\n\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\tgroup by tc2.trello_id\n) as mc\non mc.card_id = tc.trello_id\nwhere tl.name like 'type:%'\n\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\tand tm.trello_id in (${employee_id})\ngroup by tl.name",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Team spending",
+      "transformations": [],
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 300
+              },
+              {
+                "color": "orange",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 700
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 0,
+        "y": 10
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": [],
+          "reducer": [
+            "mean"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttype as Type,\n\tAVG(cost) as Cost\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\ttl.name as type,\n\t\tsum((tch.duration_minutes / mc.member_count) / (24.0 * 60) * tm.salary_per_day) as cost\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id\n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id\n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type:%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n\tgroup by tc.trello_id, tl.name\n) as result\ngroup by type\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Average card cost",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 40
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 6,
+        "y": 10
+      },
+      "id": 3,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": [
+            "Count"
+          ],
+          "reducer": [
+            "sum"
+          ],
+          "show": true
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select\n\ttl.name as Type,\n\tsum(count) as Count\nfrom trello_cards tc \ninner join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \ninner join trello_labels tl \non tl.trello_id  = tclr.trello_label_id \ninner join trello_card_member_relation tcmr \non tcmr.trello_card_id = tc.trello_id \nleft join trello_members tm \non tm.trello_id = tcmr.trello_member_id \nleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\t1.0 / count(tcmr2.trello_member_id) as count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\non mc.card_id = tc.trello_id\nwhere tl.name like 'type:%'\n\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\tand tm.trello_id in (${employee_id})\ngroup by tl.name",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Card type count",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 150
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 12,
+        "y": 10
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": [
+            "Cost"
+          ],
+          "reducer": [
+            "mean"
+          ],
+          "show": true
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select\n\ttype as Type,\n\tavg(story_cost) as Cost\nfrom (\n\tselect\n\t\ttl.name as type,\n\t\t(sum(tch.duration_minutes / mc.member_count) * 1.0 / (24.0 * 60) * tm.salary_per_day) / (tc.score * 1.0 / mc.member_count) as story_cost\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id \n\tleft join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id \n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type:%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.score != 0 and tc.score is not null\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n\tgroup by tc.trello_id, tl.name, tc.score, mc.member_count, tm.salary_per_day\n) as result\ngroup by type",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Story point cost",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Story"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 13,
+        "w": 6,
+        "x": 18,
+        "y": 10
+      },
+      "id": 36,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": [
+            "Story"
+          ],
+          "reducer": [
+            "sum"
+          ],
+          "show": true
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttl.name as Type,\n\tSUM(tc.score * 1.0 / mc.member_count) as Story\nfrom trello_cards tc \nleft join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \nleft join trello_labels tl \non tl.trello_id = tclr.trello_label_id\ninner join trello_card_member_relation tcmr \non tcmr.trello_card_id = tc.trello_id \nleft join trello_members tm \non tm.trello_id = tcmr.trello_member_id \nleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tleft join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\nwhere tl.name like 'type:%'\n\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\tand tm.trello_id in (${employee_id})\ngroup by tl.name",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Story point by type",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 800
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 0,
+        "y": 23
+      },
+      "id": 75,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "mean"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\tbug_complexity as Complexity,\n\tavg(cost) as Cost\nfrom (\nselect \n card_id,\n bug_complexity,\n sum(cost) as cost\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\tcase \n\t\t\twhen tc.score <= 3 then '1 easy'\n\t\t\twhen tc.score = 5 then '2 middle'\n\t\t\telse '3 hard'\n\t\tend as bug_complexity,\n\t\t(tch.duration_minutes / mc.member_count) / (24.0 * 60) * tm.salary_per_day as cost\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id \n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id\n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tleft join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type: bug%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n) as tasks\ngroup by card_id, bug_complexity\n) as result\ngroup by bug_complexity",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Bug cost",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge",
+                  "valueDisplayMode": "color"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 6,
+        "y": 23
+      },
+      "id": 76,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": true
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.0.3",
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n    bug_complexity as Complexity,\n    SUM(count) as Count\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\ttcmr.trello_member_id as employee_id,\n\t\tcase \n\t\t\twhen tc.score <= 3 then '1 easy'\n\t\t\twhen tc.score = 5 then '2 middle'\n\t\t\telse '3 hard'\n\t\tend as bug_complexity,\n\t\ttl.name as label_name,\n\t\tmc.count as count\n\tfrom trello_cards tc \n\tinner join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tinner join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id \n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\t1.0 / count(tcmr2.trello_member_id) as count\n\t\tfrom trello_cards tc2 \n\t\tleft join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type: bug%'\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n) as tasks\ngroup by bug_complexity\n",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Bug count by complexity",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 17,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost hard"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost middle"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost easy"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 91,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\tbug_complexity as Complexity,\n\tweek as Week,\n\tavg(cost) as Cost\nfrom (\nselect \n card_id,\n bug_complexity,\n week,\n sum(cost) as cost\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\tcase \n\t\t\twhen tc.score <= 3 then 'easy'\n\t\t\twhen tc.score = 5 then 'middle'\n\t\t\telse 'hard'\n\t\tend as bug_complexity,\n\t\tDATETRUNC(week, DATEADD(week, 1, done_time)) as week,\n\t\t(tch.duration_minutes / mc.member_count) / (24.0 * 60) * tm.salary_per_day as cost\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id \n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id\n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tleft join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type: bug%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n) as tasks\ngroup by card_id, bug_complexity, week\n) as result\ngroup by bug_complexity, week",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Bug cost dynamic",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 11,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: bug 🐞"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: demo"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: development"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: documentation ✏️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: infrastructure 🛠"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: management 🎓"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: research 🔎"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: routine"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: support help 🎗️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Cost type: bug 🐞"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 37,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttype as Type,\n\tweek as Week,\n\tavg(cost) as Cost\nfrom (\nselect \n\ttype,\n\tDATETRUNC(week, DATEADD(week, 1, done_time)) as week,\n\tsum(cost) as cost\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\ttm.trello_id  as employee_id,\n\t\ttl.name as type,\n\t\t(tch.duration_minutes / mc.member_count) / (24.0 * 60) * tm.salary_per_day as cost,\n\t\ttc.done_time as done_time\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id\n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id\n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type:%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n) as tasks\ngroup by card_id, employee_id, type, DATETRUNC(week, DATEADD(week, 1, done_time))\n) as result\ngroup by type, week",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Task cost dynamic",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DB_METRICS_DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: bug 🐞"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: development"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: infrastructure 🛠"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: management 🎓"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: research 🔎"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: routine"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "text",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: support help 🎗️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: demo"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cost type: documentation ✏️"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "Cost type: bug 🐞"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 38,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "select \n\ttype as Type,\n\tweek as Week,\n\tavg(cost) as Cost\nfrom (\nselect \n\ttype,\n\tDATETRUNC(week, DATEADD(week, 1, done_time)) as week,\n\tsum(story_cost) as cost\nfrom (\n\tselect\n\t\ttc.trello_id as card_id,\n\t\ttm.trello_id  as employee_id,\n\t\ttl.name as type,\n\t\t((tch.duration_minutes / mc.member_count) / (24.0 * 60) * tm.salary_per_day) / (tc.score * 1.0 / mc.member_count) as story_cost,\n\t\ttc.done_time as done_time\n\tfrom trello_cards tc \n\tleft join trello_card_label_relation tclr \n\ton tclr.trello_card_id = tc.trello_id \n\tleft join trello_labels tl \n\ton tl.trello_id  = tclr.trello_label_id \n\tinner join trello_card_member_relation tcmr \n\ton tcmr.trello_card_id = tc.trello_id \n\tleft join trello_members tm \n\ton tm.trello_id = tcmr.trello_member_id\n\tleft join trello_card_history tch \n\ton tch.trello_card_id = tc.trello_id\n\tleft join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\twhere tc2.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tgroup by tc2.trello_id\n\t) as mc\n\ton mc.card_id = tc.trello_id\n\twhere tl.name like 'type:%'\n\t\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\t\tand tc.score != 0 and tc.score is not null\n\t\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n\t\tand tm.trello_id in (${employee_id})\n) as tasks\ngroup by card_id, employee_id, type, DATETRUNC(week, DATEADD(week, 1, done_time))\n) as result\ngroup by type, week",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Story cost dynamic",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 89,
+      "panels": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DB_METRICS_DATASOURCE}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": true,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 500
+                  },
+                  {
+                    "color": "orange",
+                    "value": 750
+                  },
+                  {
+                    "color": "red",
+                    "value": 1000
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value"
+                },
+                "properties": [
+                  {
+                    "id": "custom.cellOptions",
+                    "value": {
+                      "type": "color-text"
+                    }
+                  },
+                  {
+                    "id": "unit",
+                    "value": "currencyUSD"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 15,
+            "w": 24,
+            "x": 0,
+            "y": 61
+          },
+          "id": 90,
+          "options": {
+            "cellHeight": "sm",
+            "footer": {
+              "countRows": false,
+              "enablePagination": true,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Value"
+              }
+            ]
+          },
+          "pluginVersion": "10.0.3",
+          "targets": [
+            {
+              "datasource": {
+                "type": "mssql",
+                "uid": "${DB_METRICS_DATASOURCE}"
+              },
+              "editorMode": "code",
+              "format": "table",
+              "rawQuery": true,
+              "rawSql": "select \n\ttype,\n\tISNULL(full_name, 'no assignee') as assignee,\n\tstory,\n\tcase\n\t\twhen story <= 3 then 'easy'\n\t\twhen story = 5 then 'medium'\n\t\telse 'hard'\n\tend as complexity,\n\turl,\n\tSUM(cost)\nfrom (\nselect \n\ttc.trello_id,\n\ttl.name as type,\n\ttm.full_name,\n\ttc.score as story,\n\ttc.short_url as url,\n\t((tch.duration_minutes * 1.0 / mc.member_count) / (24 * 60)) * tm.salary_per_day as cost\nfrom trello_cards tc \nleft join trello_card_history tch \non tch.trello_card_id = tc.trello_id \nleft join trello_card_member_relation tcmr \non tcmr.trello_card_id = tc.trello_id \nleft join trello_members tm \non tm.trello_id = tcmr.trello_member_id \nleft join trello_card_label_relation tclr \non tclr.trello_card_id = tc.trello_id \nleft join trello_labels tl \non tl.trello_id = tclr.trello_label_id\ninner join (\n\t\tselect \n\t\t\ttc2.trello_id as card_id,\n\t\t\tcount(tcmr2.trello_member_id) as member_count\n\t\tfrom trello_cards tc2 \n\t\tinner join trello_card_member_relation tcmr2 \n\t\ton tcmr2.trello_card_id = tc2.trello_id\n\t\tgroup by tc2.trello_id\n\t) as mc\non mc.card_id = tc.trello_id\nwhere tl.name like 'type:%'\n\tand tch.trello_list_id = '5a2fc0b811bfc2a9b31cc852'\n\tand tc.done_time between '${__from:date:iso}' and '${__to:date:iso}'\n) as tasks\ngroup by type, full_name, story, url",
+              "refId": "A",
+              "sql": {
+                "columns": [
+                  {
+                    "parameters": [],
+                    "type": "function"
+                  }
+                ],
+                "groupBy": [
+                  {
+                    "property": {
+                      "type": "string"
+                    },
+                    "type": "groupBy"
+                  }
+                ],
+                "limit": 50
+              }
+            }
+          ],
+          "title": "Bug cost table",
+          "type": "table"
+        }
+      ],
+      "title": "Bugs with costs",
+      "type": "row"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "DxMetricsDb",
+          "value": "DxMetricsDb"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "DB_METRICS_DATASOURCE",
+        "options": [],
+        "query": "mssql",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": "'5316bd314b41c8ac4155a79f', '561e8894fb47c289aa122dec', '525d5151aa3d4e2512000a4e', '62f5ff4ae1d51c222f3d8334', '629db35c3c001407334e5ab3', '609a78f4a5c6ab080f270c56'",
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "Team member",
+        "multi": false,
+        "name": "employee_id",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "Alyar_S",
+            "value": "5316bd314b41c8ac4155a79f"
+          },
+          {
+            "selected": false,
+            "text": "Andrew_D",
+            "value": "561e8894fb47c289aa122dec"
+          },
+          {
+            "selected": false,
+            "text": "Andrew_M",
+            "value": "525d5151aa3d4e2512000a4e"
+          },
+          {
+            "selected": false,
+            "text": "Eldar_I",
+            "value": "62f5ff4ae1d51c222f3d8334"
+          },
+          {
+            "selected": false,
+            "text": "Ilya_V",
+            "value": "629db35c3c001407334e5ab3"
+          },
+          {
+            "selected": false,
+            "text": "Roman_S",
+            "value": "609a78f4a5c6ab080f270c56"
+          }
+        ],
+        "query": "Alyar_S : 5316bd314b41c8ac4155a79f, Andrew_D : 561e8894fb47c289aa122dec, Andrew_M : 525d5151aa3d4e2512000a4e, Eldar_I : 62f5ff4ae1d51c222f3d8334, Ilya_V : 629db35c3c001407334e5ab3, Roman_S : 609a78f4a5c6ab080f270c56",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Grids private dashboard",
+  "uid": "ebb8779a-5a21-4138-8f4a-b4128c8e5b92",
+  "version": 156,
+  "weekStart": ""
+}
