@@ -49,6 +49,7 @@ export interface TrelloCard {
   idList: string;
   idBoard: string;
   name: string;
+  shortUrl: string;
 }
 
 export interface TrelloCardMoveAction {

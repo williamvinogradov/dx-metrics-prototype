@@ -29,6 +29,8 @@ model trello_cards {
   trello_card_history           trello_card_history[]
   trello_label_task_relation    trello_card_label_relation[]
   board_id                      String
+  name                          String
+  short_url                     String
   score                         Int?
   done_time                     DateTime
   duration_minutes              Int
@@ -50,6 +52,7 @@ model trello_members {
   updated_time                DateTime                      @updatedAt
   trello_name                 String                        @unique
   full_name                   String                        @unique
+  salary_per_day              Int?
   trello_member_task_relation trello_card_member_relation[]
 }
 

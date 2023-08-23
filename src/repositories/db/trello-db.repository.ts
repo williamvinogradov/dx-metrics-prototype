@@ -211,11 +211,15 @@ export class TrelloDbRepository {
       update: {
         board_id: cardFull.idBoard,
         score: cardFull.score,
+        name: cardFull.name,
+        short_url: cardFull.shortUrl,
       },
       create: {
         trello_id: cardFull.id,
         task_id: taskId,
         board_id: cardFull.idBoard,
+        name: cardFull.name,
+        short_url: cardFull.shortUrl,
         score: cardFull.score,
         done_time: cardFull.doneTime,
         duration_minutes: cardFull.durationInMinutes ?? 0,
